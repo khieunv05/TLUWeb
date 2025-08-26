@@ -1,0 +1,92 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+.container {
+    margin: auto;
+    margin-bottom: 10%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+.container2 {
+    margin: auto;
+    margin-bottom: 10%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+.select-course {
+    margin: auto;
+    margin-bottom: 10%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+select {
+    width: 300px;
+    height: 40px;
+    border-radius: 10px;
+    border: 1px solid gray;
+    padding-left: 10px;
+    font-size: 16px;
+    margin-bottom: 20px;
+
+}
+
+input {
+    width: 300px;
+    height: 40px;
+    border-radius: 10px;
+    border: 1px solid gray;
+    padding-left: 10px;
+    font-size: 16px;
+    margin-bottom: 20px;
+}
+
+label {
+    font-size: larger;
+}
+
+button {
+    width: 300px;
+    height: 40px;
+    border-radius: 10px;
+    border: 1px solid gray;
+    background-color: blue;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.subjectInfo {
+    padding: 20px;
+    border: 1px solid gray;
+    border-radius: 10px;
+    width: 50vh;
+    margin-bottom: 10px;
+}
+
+.endOfSubjectSingle {
+    padding: 10px;
+    border: 1px solid gray;
+    border-radius: 10px;
+    background-color: #f0f0f0;
+    margin-bottom: 10px;
+}
+
+.nutDangKi {
+    border: 1px solid gray;
+    border-radius: 10px;
+    background-color: blue;
+    color: white;
+    cursor: pointer;
+}
