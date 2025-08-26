@@ -13,10 +13,12 @@ let courseId = null
 let studentId = null
 const tokenManager = TokenManager()
 const Login = async () => {
+    document.querySelector(".loading").style.display = "flex";
     let username = document.getElementById("username").value
     let password = document.getElementById("password").value
     if (tokenManager.getToken() !== null) {
         console.log("Đã có token, không cần đăng nhập lại")
+        document.querySelector(".loading").style.display = "none";
     }
     if (tokenManager.getToken() === null) {
         try {
@@ -35,15 +37,17 @@ const Login = async () => {
             })
             const data = await response.json()
             tokenManager.setToken(data.access_token)
+            document.querySelector(".loading").style.display = "none";
         }
         catch (error) {
             console.error("Đăng nhập không thành công:", error)
-            awaitLogin()
+            await Login()
         }
 
     }
 }
 const GetStudentId = async () => {
+    document.querySelector(".loading").style.display = "flex";
     if (studentId === null) {
         try {
             const responseForStudentId = await fetch("https://sinhvien1.tlu.edu.vn/education/api/student/getstudentbylogin", {
@@ -54,6 +58,7 @@ const GetStudentId = async () => {
             })
             const studentData = await responseForStudentId.json()
             studentId = studentData.id
+            document.querySelector(".loading").style.display = "none";
         }
         catch (error) {
             console.error("Lỗi khi lấy studentId:", error)
@@ -62,14 +67,16 @@ const GetStudentId = async () => {
     }
 }
 const GetCourseId = async () => {
+    document.querySelector(".loading").style.display = "flex";
     try {
-        const responseForSemester = await fetch("https://sinhvien1.tlu.edu.vn/education/api/semester/semester_info", {
-            method: "GET",
-            headers: {
-                Authorization: `Bearer ${tokenManager.getToken()}`
-            }
-        })
         if (courseId === null) {
+
+            const responseForSemester = await fetch("https://sinhvien1.tlu.edu.vn/education/api/semester/semester_info", {
+                method: "GET",
+                headers: {
+                    Authorization: `Bearer ${tokenManager.getToken()}`
+                }
+            })
             const semesterData = await responseForSemester.json()
             semesterData.semesterRegisterPeriods.forEach(element => {
                 const option = document.createElement("option")
@@ -79,6 +86,7 @@ const GetCourseId = async () => {
             });
             courseId = semesterData.semesterRegisterPeriods[0].id
         }
+        document.querySelector(".loading").style.display = "none";
     }
     catch (error) {
         console.error("Lỗi khi lấy courseId:", error)
@@ -96,13 +104,14 @@ document.getElementById("login").addEventListener("click", async () => {
         await Login()
         await GetStudentId()
         await GetCourseId()
-
+        document.querySelector(".loading").style.display = "flex";
         const findAllCourse = await fetch(`https://sinhvien1.tlu.edu.vn/education/api/cs_reg_mongo/findByPeriod/${studentId}/${courseId}`, {
             method: "GET",
             headers: {
                 Authorization: `Bearer ${tokenManager.getToken()}`
             }
         })
+        document.querySelector(".loading").style.display = "none";
         const allCourseData = await findAllCourse.json()
         let div = null
         allCourseData.courseRegisterViewObject.listSubjectRegistrationDtos.forEach(element => {
@@ -260,19 +269,38 @@ document.getElementById("login").addEventListener("click", async () => {
     }
 
 })
+let retry = 5
+const OnChangePeriod = async () => {
+    document.querySelector(".loading").style.display = "flex";
+    try {
+        const responseForSemester = await fetch("https://sinhvien1.tlu.edu.vn/education/api/semester/semester_info", {
+            method: "GET",
+            headers: {
+                Authorization: `Bearer ${tokenManager.getToken()}`
+            }
+        })
+        const semesterData = await responseForSemester.json()
+        semesterData.semesterRegisterPeriods.forEach(element => {
+            if (element.name === document.getElementById("course").value) {
+                courseId = element.id
+            }
+        });
+        document.querySelector(".loading").style.display = "none";
+    }
+    catch (error) {
+        console.error("Error:", error)
+        if (retry > 0) {
+            retry--
+            OnChangePeriod()
+        }
+        if (retry === 0) {
+            document.querySelector(".loading").style.display = "none";
+        }
+    }
+}
 document.getElementById("course").addEventListener("change", async () => {
-    const responseForSemester = await fetch("https://sinhvien1.tlu.edu.vn/education/api/semester/semester_info", {
-        method: "GET",
-        headers: {
-            Authorization: `Bearer ${tokenManager.getToken()}`
-        }
-    })
-    const semesterData = await responseForSemester.json()
-    semesterData.semesterRegisterPeriods.forEach(element => {
-        if (element.name === document.getElementById("course").value) {
-            courseId = element.id
-        }
-    });
+
+    await OnChangePeriod()
 })
 
 
