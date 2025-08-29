@@ -43,6 +43,11 @@ const Login = async () => {
                     return
 
                 }
+                if (response.status === 500) {
+                    alert("Lỗi máy chủ, vui lòng thử lại sau")
+                    document.querySelector(".loading").style.display = "none";
+                    return
+                }
             }
             const data = await response.json()
             tokenManager.setToken(data.access_token)
