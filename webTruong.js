@@ -11,6 +11,7 @@ const TokenManager = () => {
 }
 let courseId = null
 let studentId = null
+let login = false
 const tokenManager = TokenManager()
 const Login = async () => {
     document.querySelector(".loading").style.display = "flex";
@@ -35,8 +36,17 @@ const Login = async () => {
                     client_secret: "password"
                 })
             })
+            if (!response.ok) {
+                if (response.status === 400) {
+                    alert("Tên đăng nhập hoặc mật khẩu không đúng")
+                    document.querySelector(".loading").style.display = "none";
+                    return
+
+                }
+            }
             const data = await response.json()
             tokenManager.setToken(data.access_token)
+            login = true
             document.querySelector(".loading").style.display = "none";
         }
         catch (error) {
@@ -94,16 +104,8 @@ const GetCourseId = async () => {
     }
 
 }
-document.getElementById("login").addEventListener("click", async () => {
-    document.getElementById("container2").innerHTML = ""
-    if (courseId === null) {
-        document.getElementById("course").innerHTML = ""
-    }
-
+const FindAllCourse = async () => {
     try {
-        await Login()
-        await GetStudentId()
-        await GetCourseId()
         document.querySelector(".loading").style.display = "flex";
         const findAllCourse = await fetch(`https://sinhvien1.tlu.edu.vn/education/api/cs_reg_mongo/findByPeriod/${studentId}/${courseId}`, {
             method: "GET",
@@ -111,100 +113,57 @@ document.getElementById("login").addEventListener("click", async () => {
                 Authorization: `Bearer ${tokenManager.getToken()}`
             }
         })
-        document.querySelector(".loading").style.display = "none";
         const allCourseData = await findAllCourse.json()
-        let div = null
-        allCourseData.courseRegisterViewObject.listSubjectRegistrationDtos.forEach(element => {
-            div = document.createElement("div")
-            div.className = "subjectInfo"
-            div.style.backgroundColor = "#f0f0f0"
-            p1 = document.createElement("p")
-            p1.style.fontWeight = "bold"
-            p1.style.fontSize = "50px"
-            p1.innerHTML = element.subjectName
-            div.appendChild(p1)
-            element.courseSubjectDtos.forEach(course => {
-                endOfSubjectSingle = document.createElement("div")
-                endOfSubjectSingle.className = "endOfSubjectSingle"
-                course.timetables.forEach(timetable => {
-                    const p1 = document.createElement("p")
-                    p1.innerHTML = `Tuần: ${timetable.fromWeek} - Tuần:${timetable.toWeek}`
-                    const p2 = document.createElement("p")
-                    p2.innerHTML = `<b>Thứ: ${timetable.weekIndex} </b> - ${timetable.start} - ${timetable.end} - ${timetable.roomName} `
-                    endOfSubjectSingle.appendChild(p1)
-                    endOfSubjectSingle.appendChild(p2)
-                })
-                p2 = document.createElement("p")
-                p2.style.fontWeight = "bold"
-                p2.style.fontSize = "20px"
-                p2.innerHTML = `${course.numberStudent}/${course.maxStudent}`
-                endOfSubjectSingle.appendChild(p2)
-                if (course.subCourseSubjects === null) {
-                    const nutDangKi = document.createElement("button")
-                    nutDangKi.className = "nutDangKi"
-                    if (course.isSelected === true) {
-                        nutDangKi.innerHTML = "Đã đăng kí học phần này"
-                        nutDangKi.style.backgroundColor = "red"
-                        nutDangKi.disabled = true
-                    }
-                    else if (course.overLapClasses.length > 0) {
-                        nutDangKi.innerHTML = "Trùng lịch với lớp khác"
-                        nutDangKi.style.backgroundColor = "red"
-                        nutDangKi.disabled = true
-                    }
-                    else {
-                        nutDangKi.innerHTML = "Đăng ký"
-                        nutDangKi.disabled = false
-                    }
-                    endOfSubjectSingle.appendChild(nutDangKi)
-                    nutDangKi.addEventListener("click", async () => {
-                        try {
-                            const responseAddRegister = await fetch(`https://sinhvien1.tlu.edu.vn/education/api/cs_reg_mongo/add-register/${studentId}/${courseId}`, {
-                                method: "POST",
-                                headers: {
-                                    "Content-Type": "application/json",
-                                    "Authorization": `Bearer ${tokenManager.getToken()}`
-                                },
-                                body: JSON.stringify({
-                                    "id": course.id,
-                                    "subject_id": course.subjectId,
-                                })
-                            })
-                            const result = await responseAddRegister.json()
-                            if (result.success) {
-                                alert("Đăng ký thành công")
-                            } else {
-                                alert(`${result.message}`)
-                            }
-                        }
+        document.querySelector(".loading").style.display = "none";
+        return allCourseData
+    }
 
-                        catch (error) {
-                            console.error("Error:", error)
-                        }
-                    })
-                }
-                div.appendChild(endOfSubjectSingle)
-                if (course.subCourseSubjects !== null) {
-                    p3 = document.createElement("p")
-                    p3.style.fontWeight = "bold"
-                    p3.innerHTML = `Các lớp thực hành`
-                    div.appendChild(p3)
-                    course.subCourseSubjects.forEach(course => {
-                        endOfSubjectSingle = document.createElement("div")
-                        endOfSubjectSingle.className = "endOfSubjectSingle"
-                        course.timetables.forEach(timetable => {
-                            const p1 = document.createElement("p")
-                            p1.innerHTML = `Tuần: ${timetable.fromWeek} - Tuần:${timetable.toWeek}`
-                            const p2 = document.createElement("p")
-                            p2.innerHTML = `<b>Thứ: ${timetable.weekIndex} </b> - ${timetable.start} - ${timetable.end} - ${timetable.roomName} `
-                            endOfSubjectSingle.appendChild(p1)
-                            endOfSubjectSingle.appendChild(p2)
-                        })
-                        p2 = document.createElement("p")
-                        p2.style.fontWeight = "bold"
-                        p2.style.fontSize = "20px"
-                        p2.innerHTML = `${course.numberStudent}/${course.maxStudent}`
+    catch (error) {
+        console.error("Lỗi khi lấy danh sách khóa học:", error)
+        await FindAllCourse()
+    }
+}
+document.getElementById("login").addEventListener("click", async () => {
+    document.getElementById("container2").innerHTML = ""
+    if (courseId === null) {
+        document.getElementById("course").innerHTML = ""
+    }
+
+    try {
+        if (login === false) {
+            await Login()
+        }
+        if (login === true) {
+            await GetStudentId()
+            await GetCourseId()
+            const allCourseData = await FindAllCourse()
+            let div = null
+            allCourseData.courseRegisterViewObject.listSubjectRegistrationDtos?.forEach(element => {
+                div = document.createElement("div")
+                div.className = "subjectInfo"
+                div.style.backgroundColor = "#f0f0f0"
+                p1 = document.createElement("p")
+                p1.style.fontWeight = "bold"
+                p1.style.fontSize = "50px"
+                p1.innerHTML = element.subjectName
+                div.appendChild(p1)
+                element.courseSubjectDtos?.forEach(course => {
+                    endOfSubjectSingle = document.createElement("div")
+                    endOfSubjectSingle.className = "endOfSubjectSingle"
+                    course.timetables?.forEach(timetable => {
+                        const p1 = document.createElement("p")
+                        p1.innerHTML = `Tuần: ${timetable.fromWeek} - Tuần:${timetable.toWeek}`
+                        const p2 = document.createElement("p")
+                        p2.innerHTML = `<b>Thứ: ${timetable.weekIndex} </b> - ${timetable.start} - ${timetable.end} - ${timetable.roomName} `
+                        endOfSubjectSingle.appendChild(p1)
                         endOfSubjectSingle.appendChild(p2)
+                    })
+                    p2 = document.createElement("p")
+                    p2.style.fontWeight = "bold"
+                    p2.style.fontSize = "20px"
+                    p2.innerHTML = `${course.numberStudent}/${course.maxStudent}`
+                    endOfSubjectSingle.appendChild(p2)
+                    if (course.subCourseSubjects === null) {
                         const nutDangKi = document.createElement("button")
                         nutDangKi.className = "nutDangKi"
                         if (course.isSelected === true) {
@@ -224,6 +183,7 @@ document.getElementById("login").addEventListener("click", async () => {
                         endOfSubjectSingle.appendChild(nutDangKi)
                         nutDangKi.addEventListener("click", async () => {
                             try {
+                                document.querySelector(".loading").style.display = "flex";
                                 const responseAddRegister = await fetch(`https://sinhvien1.tlu.edu.vn/education/api/cs_reg_mongo/add-register/${studentId}/${courseId}`, {
                                     method: "POST",
                                     headers: {
@@ -236,6 +196,7 @@ document.getElementById("login").addEventListener("click", async () => {
                                     })
                                 })
                                 const result = await responseAddRegister.json()
+                                document.querySelector(".loading").style.display = "none";
                                 if (result.success) {
                                     alert("Đăng ký thành công")
                                 } else {
@@ -244,20 +205,91 @@ document.getElementById("login").addEventListener("click", async () => {
                             }
 
                             catch (error) {
+                                document.querySelector(".loading").style.display = "none";
                                 console.error("Error:", error)
+                                alert("Đã xảy ra lỗi. Vui lòng thử lại sau.")
                             }
                         })
-                        div.appendChild(endOfSubjectSingle)
+                    }
+                    div.appendChild(endOfSubjectSingle)
+                    if (course.subCourseSubjects !== null) {
+                        p3 = document.createElement("p")
+                        p3.style.fontWeight = "bold"
+                        p3.innerHTML = `Các lớp thực hành`
+                        div.appendChild(p3)
+                        course.subCourseSubjects?.forEach(course => {
+                            endOfSubjectSingle = document.createElement("div")
+                            endOfSubjectSingle.className = "endOfSubjectSingle"
+                            course.timetables?.forEach(timetable => {
+                                const p1 = document.createElement("p")
+                                p1.innerHTML = `Tuần: ${timetable.fromWeek} - Tuần:${timetable.toWeek}`
+                                const p2 = document.createElement("p")
+                                p2.innerHTML = `<b>Thứ: ${timetable.weekIndex} </b> - ${timetable.start} - ${timetable.end} - ${timetable.roomName} `
+                                endOfSubjectSingle.appendChild(p1)
+                                endOfSubjectSingle.appendChild(p2)
+                            })
+                            p2 = document.createElement("p")
+                            p2.style.fontWeight = "bold"
+                            p2.style.fontSize = "20px"
+                            p2.innerHTML = `${course.numberStudent}/${course.maxStudent}`
+                            endOfSubjectSingle.appendChild(p2)
+                            const nutDangKi = document.createElement("button")
+                            nutDangKi.className = "nutDangKi"
+                            if (course.isSelected === true) {
+                                nutDangKi.innerHTML = "Đã đăng kí học phần này"
+                                nutDangKi.style.backgroundColor = "red"
+                                nutDangKi.disabled = true
+                            }
+                            else if (course.overLapClasses.length > 0) {
+                                nutDangKi.innerHTML = "Trùng lịch với lớp khác"
+                                nutDangKi.style.backgroundColor = "red"
+                                nutDangKi.disabled = true
+                            }
+                            else {
+                                nutDangKi.innerHTML = "Đăng ký"
+                                nutDangKi.disabled = false
+                            }
+                            endOfSubjectSingle.appendChild(nutDangKi)
+                            nutDangKi.addEventListener("click", async () => {
+                                try {
+                                    document.querySelector(".loading").style.display = "flex";
+                                    const responseAddRegister = await fetch(`https://sinhvien1.tlu.edu.vn/education/api/cs_reg_mongo/add-register/${studentId}/${courseId}`, {
+                                        method: "POST",
+                                        headers: {
+                                            "Content-Type": "application/json",
+                                            "Authorization": `Bearer ${tokenManager.getToken()}`
+                                        },
+                                        body: JSON.stringify({
+                                            "id": course.id,
+                                            "subject_id": course.subjectId,
+                                        })
+                                    })
+                                    const result = await responseAddRegister.json()
+                                    document.querySelector(".loading").style.display = "none";
+                                    if (result.success) {
+                                        alert("Đăng ký thành công")
+                                    } else {
+                                        alert(`${result.message}`)
+                                    }
+                                }
+
+                                catch (error) {
+                                    document.querySelector(".loading").style.display = "none";
+                                    console.error("Error:", error)
+                                    alert("Đã xảy ra lỗi. Vui lòng thử lại sau.")
+                                }
+                            })
+                            div.appendChild(endOfSubjectSingle)
 
 
-                    })
-                }
+                        })
+                    }
 
 
+                })
+                document.getElementById("container2").appendChild(div)
             })
-            document.getElementById("container2").appendChild(div)
-        })
-
+        }
 
 
 
