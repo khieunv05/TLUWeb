@@ -99,8 +99,9 @@ const GetCourseId = async () => {
                 option.textContent = element.semesterName
                 document.getElementById("course-year").appendChild(option)
             })
+            OnChangeYearPeriod()
         }
-        OnChangeYearPeriod()
+
         document.querySelector(".loading").style.display = "none";
 
     }
@@ -135,9 +136,6 @@ const FindAllCourse = async () => {
 }
 document.getElementById("login").addEventListener("click", async () => {
     document.getElementById("container2").innerHTML = ""
-    if (courseId === null) {
-        document.getElementById("course").innerHTML = ""
-    }
     if (dataCourseYear === null) {
         document.getElementById("course-year").innerHTML = ""
     }
@@ -319,35 +317,6 @@ document.getElementById("login").addEventListener("click", async () => {
     }
 
 })
-let retry = 5
-const OnChangePeriod = async () => {
-    document.querySelector(".loading").style.display = "flex";
-    try {
-        const responseForSemester = await fetch("https://sinhvien1.tlu.edu.vn/education/api/semester/semester_info", {
-            method: "GET",
-            headers: {
-                Authorization: `Bearer ${tokenManager.getToken()}`
-            }
-        })
-        const semesterData = await responseForSemester.json()
-        semesterData.semesterRegisterPeriods.forEach(element => {
-            if (element.name === document.getElementById("course").value) {
-                courseId = element.id
-            }
-        });
-        document.querySelector(".loading").style.display = "none";
-    }
-    catch (error) {
-        console.error("Error:", error)
-        if (retry > 0) {
-            retry--
-            OnChangePeriod()
-        }
-        if (retry === 0) {
-            document.querySelector(".loading").style.display = "none";
-        }
-    }
-}
 const OnChangeYearPeriod = () => {
     document.getElementById("course").innerHTML = ""
     dataCourseYear?.forEach(element => {
@@ -362,12 +331,12 @@ const OnChangeYearPeriod = () => {
         }
     })
 }
+const OnChangePeriod = () => {
+    courseId = document.getElementById("course").value
+}
 document.getElementById("course-year").addEventListener("change", () => {
     OnChangeYearPeriod()
 })
-document.getElementById("course").addEventListener("change", async () => {
-
-    await OnChangePeriod()
+document.getElementById("course").addEventListener("change", () => {
+    OnChangePeriod()
 })
-
-
