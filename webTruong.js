@@ -163,6 +163,9 @@ document.getElementById("login").addEventListener("click", async () => {
                         endOfSubjectSingle.appendChild(p1)
                         endOfSubjectSingle.appendChild(p2)
                     })
+                    p3 = document.createElement("p")
+                    p3.innerHTML = course.displayName
+                    endOfSubjectSingle.appendChild(p3)
                     p2 = document.createElement("p")
                     p2.style.fontWeight = "bold"
                     p2.style.fontSize = "20px"
@@ -185,7 +188,6 @@ document.getElementById("login").addEventListener("click", async () => {
                             nutDangKi.innerHTML = "Đăng ký"
                             nutDangKi.disabled = false
                         }
-                        endOfSubjectSingle.appendChild(nutDangKi)
                         nutDangKi.addEventListener("click", async () => {
                             try {
                                 document.querySelector(".loading").style.display = "flex";
@@ -197,7 +199,7 @@ document.getElementById("login").addEventListener("click", async () => {
                                     },
                                     body: JSON.stringify({
                                         "id": course.id,
-                                        "subject_id": course.subjectId,
+                                        "subjectId": course.subjectId
                                     })
                                 })
                                 const result = await responseAddRegister.json()
@@ -215,6 +217,8 @@ document.getElementById("login").addEventListener("click", async () => {
                                 alert("Đã xảy ra lỗi. Vui lòng thử lại sau.")
                             }
                         })
+                        endOfSubjectSingle.appendChild(nutDangKi)
+
                     }
                     div.appendChild(endOfSubjectSingle)
                     if (course.subCourseSubjects !== null) {
@@ -254,7 +258,6 @@ document.getElementById("login").addEventListener("click", async () => {
                                 nutDangKi.innerHTML = "Đăng ký"
                                 nutDangKi.disabled = false
                             }
-                            endOfSubjectSingle.appendChild(nutDangKi)
                             nutDangKi.addEventListener("click", async () => {
                                 try {
                                     document.querySelector(".loading").style.display = "flex";
@@ -266,7 +269,7 @@ document.getElementById("login").addEventListener("click", async () => {
                                         },
                                         body: JSON.stringify({
                                             "id": course.id,
-                                            "subject_id": course.subjectId,
+                                            "subjectId": course.subjectId
                                         })
                                     })
                                     const result = await responseAddRegister.json()
@@ -284,6 +287,8 @@ document.getElementById("login").addEventListener("click", async () => {
                                     alert("Đã xảy ra lỗi. Vui lòng thử lại sau.")
                                 }
                             })
+                            endOfSubjectSingle.appendChild(nutDangKi)
+
                             div.appendChild(endOfSubjectSingle)
 
 
