@@ -22,13 +22,16 @@
     flex-direction: column;
 }
 
+#course-year {
+    margin-right: 10px;
+}
+
 .select-course {
     margin: auto;
     margin-bottom: 10%;
     display: flex;
     justify-content: center;
     align-items: center;
-    flex-direction: column;
 }
 
 select {

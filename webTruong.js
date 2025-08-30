@@ -12,6 +12,7 @@ const TokenManager = () => {
 let courseId = null
 let studentId = null
 let login = false
+let dataCourseYear = null
 const tokenManager = TokenManager()
 const Login = async () => {
     document.querySelector(".loading").style.display = "flex";
@@ -84,23 +85,24 @@ const GetCourseId = async () => {
     document.querySelector(".loading").style.display = "flex";
     try {
         if (courseId === null) {
-
-            const responseForSemester = await fetch("https://sinhvien1.tlu.edu.vn/education/api/semester/semester_info", {
+            const responseForSemester = await fetch("https://sinhvien1.tlu.edu.vn/education/api/semester/getwithfullsub", {
                 method: "GET",
                 headers: {
                     Authorization: `Bearer ${tokenManager.getToken()}`
                 }
             })
             const semesterData = await responseForSemester.json()
-            semesterData.semesterRegisterPeriods.forEach(element => {
+            dataCourseYear = semesterData
+            semesterData.forEach(element => {
                 const option = document.createElement("option")
-                option.value = element.name
-                option.textContent = element.name
-                document.getElementById("course").appendChild(option)
-            });
-            courseId = semesterData.semesterRegisterPeriods[0].id
+                option.value = element.semesterName
+                option.textContent = element.semesterName
+                document.getElementById("course-year").appendChild(option)
+            })
         }
+        OnChangeYearPeriod()
         document.querySelector(".loading").style.display = "none";
+
     }
     catch (error) {
         console.error("Lỗi khi lấy courseId:", error)
@@ -117,9 +119,13 @@ const FindAllCourse = async () => {
                 Authorization: `Bearer ${tokenManager.getToken()}`
             }
         })
-        const allCourseData = await findAllCourse.json()
+        const allCourseData = await findAllCourse.text()
+        if (allCourseData === null || allCourseData.trim() === "") {
+            document.querySelector(".loading").style.display = "none";
+            return
+        }
         document.querySelector(".loading").style.display = "none";
-        return allCourseData
+        return JSON.parse(allCourseData)
     }
 
     catch (error) {
@@ -132,6 +138,9 @@ document.getElementById("login").addEventListener("click", async () => {
     if (courseId === null) {
         document.getElementById("course").innerHTML = ""
     }
+    if (dataCourseYear === null) {
+        document.getElementById("course-year").innerHTML = ""
+    }
 
     try {
         if (login === false) {
@@ -142,7 +151,7 @@ document.getElementById("login").addEventListener("click", async () => {
             await GetCourseId()
             const allCourseData = await FindAllCourse()
             let div = null
-            allCourseData.courseRegisterViewObject.listSubjectRegistrationDtos?.forEach(element => {
+            allCourseData?.courseRegisterViewObject.listSubjectRegistrationDtos?.forEach(element => {
                 div = document.createElement("div")
                 div.className = "subjectInfo"
                 div.style.backgroundColor = "#f0f0f0"
@@ -339,6 +348,23 @@ const OnChangePeriod = async () => {
         }
     }
 }
+const OnChangeYearPeriod = () => {
+    document.getElementById("course").innerHTML = ""
+    dataCourseYear?.forEach(element => {
+        if (element.semesterName === document.getElementById("course-year").value) {
+            element.semesterRegisterPeriods.forEach(registerPeriod => {
+                const option = document.createElement("option")
+                option.value = registerPeriod.id
+                option.textContent = registerPeriod.name
+                document.getElementById("course").appendChild(option)
+            })
+            courseId = element.semesterRegisterPeriods[0].id
+        }
+    })
+}
+document.getElementById("course-year").addEventListener("change", () => {
+    OnChangeYearPeriod()
+})
 document.getElementById("course").addEventListener("change", async () => {
 
     await OnChangePeriod()
