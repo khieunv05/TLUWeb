@@ -14,6 +14,7 @@ let studentId = null
 let login = false
 let dataCourseYear = null
 const tokenManager = TokenManager()
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 const Login = async () => {
     document.querySelector(".loading").style.display = "flex";
     let username = document.getElementById("username").value
@@ -23,6 +24,10 @@ const Login = async () => {
         document.querySelector(".loading").style.display = "none";
     }
     if (tokenManager.getToken() === null) {
+        const controller = new AbortController();
+        const timeOut = setTimeout(() => {
+            controller.abort()
+        }, 60000);
         try {
             const response = await fetch("https://sinhvien1.tlu.edu.vn/education/oauth/token", {
                 method: "POST",
@@ -35,8 +40,10 @@ const Login = async () => {
                     username,
                     password,
                     client_secret: "password"
-                })
+                }),
+                signal: controller.signal
             })
+            clearTimeout(timeOut);
             if (!response.ok) {
                 if (response.status === 400) {
                     alert("Tên đăng nhập hoặc mật khẩu không đúng")
@@ -47,7 +54,7 @@ const Login = async () => {
                     alert("Lỗi máy chủ, vui lòng thử lại sau")
                     document.querySelector(".loading").style.display = "none";
                 }
-                await Login()
+                await Login();
             }
             const data = await response.json()
             tokenManager.setToken(data.access_token)
@@ -55,7 +62,9 @@ const Login = async () => {
             document.querySelector(".loading").style.display = "none";
         }
         catch (error) {
+            clearTimeout(timeOut);
             console.error("Đăng nhập không thành công:", error)
+            await sleep(1000);
             await Login()
         }
 
@@ -64,33 +73,50 @@ const Login = async () => {
 const GetStudentId = async () => {
     document.querySelector(".loading").style.display = "flex";
     if (studentId === null) {
+        const controller = new AbortController();
+        const timeOut = setTimeout(() => {
+            controller.abort()
+        }, 60000);
         try {
             const responseForStudentId = await fetch("https://sinhvien1.tlu.edu.vn/education/api/student/getstudentbylogin", {
                 method: "GET",
                 headers: {
                     Authorization: `Bearer ${tokenManager.getToken()}`
-                }
+                },
+                signal: controller.signal
             })
+            clearTimeout(timeOut);
             const studentData = await responseForStudentId.json()
             studentId = studentData.id
             document.querySelector(".loading").style.display = "none";
         }
         catch (error) {
+            clearTimeout(timeOut);
             console.error("Lỗi khi lấy studentId:", error)
+            await sleep(1000);
             await GetStudentId()
         }
+    }
+    else {
+        document.querySelector(".loading").style.display = "none";
     }
 }
 const GetCourseId = async () => {
     document.querySelector(".loading").style.display = "flex";
+    const controller = new AbortController();
+    const timeOut = setTimeout(() => {
+        controller.abort()
+    }, 60000);
     try {
         if (courseId === null) {
             const responseForSemester = await fetch("https://sinhvien1.tlu.edu.vn/education/api/semester/getwithfullsub", {
                 method: "GET",
                 headers: {
                     Authorization: `Bearer ${tokenManager.getToken()}`
-                }
+                },
+                signal: controller.signal
             })
+            clearTimeout(timeOut);
             const semesterData = await responseForSemester.json()
             dataCourseYear = semesterData
             semesterData.forEach(element => {
@@ -106,20 +132,28 @@ const GetCourseId = async () => {
 
     }
     catch (error) {
+        clearTimeout(timeOut);
         console.error("Lỗi khi lấy courseId:", error)
+        await sleep(1000);
         await GetCourseId()
     }
 
 }
 const FindAllCourse = async () => {
+    const controller = new AbortController();
+    const timeOut = setTimeout(() => {
+        controller.abort()
+    }, 60000);
     try {
         document.querySelector(".loading").style.display = "flex";
         const findAllCourse = await fetch(`https://sinhvien1.tlu.edu.vn/education/api/cs_reg_mongo/findByPeriod/${studentId}/${courseId}`, {
             method: "GET",
             headers: {
                 Authorization: `Bearer ${tokenManager.getToken()}`
-            }
+            },
+            signal: controller.signal
         })
+        clearTimeout(timeOut);
         const allCourseData = await findAllCourse.text()
         if (allCourseData === null || allCourseData.trim() === "") {
             document.querySelector(".loading").style.display = "none";
@@ -130,7 +164,9 @@ const FindAllCourse = async () => {
     }
 
     catch (error) {
+        clearTimeout(timeOut);
         console.error("Lỗi khi lấy danh sách khóa học:", error)
+        await sleep(1000);
         await FindAllCourse()
     }
 }
